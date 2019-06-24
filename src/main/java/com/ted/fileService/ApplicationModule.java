@@ -80,13 +80,14 @@ public class ApplicationModule extends AbstractModule {
 
         private FileSystem fileSystem = Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix());
 
-        public FileSystemProviderImpl(@Named("filesystem.source.path") String source, @Named("filesystem.target.path") String target) {
+        @Inject
+        public FileSystemProviderImpl(@Named("filesystem.source.path") String source, @Named("filesystem.target.path") String target, @Named("log.file.name") String logfileName) {
             try {
                 Path targetPath = fileSystem.getPath(target);
                 Path homePath = fileSystem.getPath(source);
                 Files.createDirectories(homePath);
                 Files.createDirectories(targetPath);
-                PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Files.createFile(homePath.resolve("logFile.txt"))));
+                PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Files.createFile(homePath.resolve(logfileName))));
                 writer.println("test test 1 2 3");
                 writer.close();
             } catch (IOException ex) {
