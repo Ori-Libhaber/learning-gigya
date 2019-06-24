@@ -70,7 +70,7 @@ public class FileServiceTest {
     }
     
     @Test
-    public void testFindFile_givenLogFileIsPresent_andItIsEveningTime_andCredintialsNotValid_thenLogFileShouldNotBeMovedToDestination_andShouldReinitilize_negative() {
+    public void testFindFile_givenLogFileIsPresent_andItIsEveningTime_andCredentialsNotValid_thenLogFileShouldNotBeMovedToDestination_andShouldReinitialize_negative() {
         
         // GIVEN
         // instantiate and setup the state of the SUT and its mocked dependencies
