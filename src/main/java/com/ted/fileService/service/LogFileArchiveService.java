@@ -52,7 +52,7 @@ public class LogFileArchiveService extends FileSystemService.SourceToTargetFileS
      */
 //    private void initialize() throws SecurityException {
 //        String workingDir = System.getProperty("user.dir");
-//        String userDetailsConfPath = System.getProperty("userPath", Paths.get(workingDir).resolve("src/main/resources/userDetails.conf").toString());
+//        String userDetailsConfPath = System.getProperty("userPath", Paths.get(workingDir).resolve("src/main/resources/application.properties").toString());
 //        File userDetailsFile = Paths.get(workingDir).resolve(Paths.get(userDetailsConfPath)).toFile();
 //        IUser user = Configuration.getUser(userDetailsFile);
 //        ILoginDetails loginDetails = Configuration.getLoginDetails(user);

@@ -47,42 +47,6 @@ public class Configuration {
     private String targetFileSystemIdentifier;
     private String sourceFileName;
 
-    public IUser getUser(File configFile) {
-        try {
-            List<String> lines = Files.readAllLines(configFile.toPath());
-            return new IUser() {
-                @Override
-                public String getFirstName() {
-                    return lines.get(0);
-                }
-                
-                @Override
-                public String getLastName() {
-                    return lines.get(1);
-                }
-                
-                @Override
-                public String getNickName() {
-                    return lines.get(2);
-                }
-                
-                @Override
-                public long getUUID() {
-                    return Long.parseLong(lines.get(3));
-                }
-
-                @Override
-                public String toString() {
-                    return String.join(", ", getFirstName(), getLastName(), getNickName(), "" + getUUID());
-                }
-                
-            };
-        } catch (IOException ex) {
-            // ignore
-        }
-        return null;
-    }
-
     public String getHomeFolderPath() {
         return homeFolderPath;
     }

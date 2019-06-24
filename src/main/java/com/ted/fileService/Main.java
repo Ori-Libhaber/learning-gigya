@@ -1,5 +1,6 @@
 package com.ted.fileService;
 
+import com.google.inject.Guice;
 import com.ted.fileService.service.FileSystemService;
 import com.ted.fileService.service.LogFileArchiveService;
 import com.ted.fileService.utils.Configuration;
@@ -13,14 +14,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class Main {
     public static void main(String[] args) {
-        Configuration.setHomeFolderPath("koko/jumbo");
-        Configuration.setTargetFolderPath("ya/ya/yeah");
-        Configuration.setSourceFileSystemIdentifier("source");
-        Configuration.setTargetFileSystemIdentifier("target");
-        Configuration.setSourceFileName("report.txt");
-        FileSystemService fileService = LogFileArchiveService.getInstance();
+        LogFileArchiveService instance = Guice.createInjector(new ApplicationModule()).getInstance(LogFileArchiveService.class);
         final ScheduledExecutorService newSingleThreadScheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-        newSingleThreadScheduledExecutor.scheduleAtFixedRate(fileService::findFile, 5L, 10L, TimeUnit.SECONDS);
+        newSingleThreadScheduledExecutor.scheduleAtFixedRate(() -> instance.execute(), 5L, 10L, TimeUnit.SECONDS);
         new SearchAlgorithmMultipleResults();
     }
 }

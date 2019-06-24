@@ -5,9 +5,14 @@ import com.evil.corp.filesystem.IFileSystemProvider;
 import com.evil.corp.security.*;
 import com.google.common.jimfs.Jimfs;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
+import com.ted.fileService.logic.SearchDescriptor;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,8 +23,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.util.logging.Logger;
 
 public class ApplicationModule extends AbstractModule {
+
+    private static Logger logger = Logger.getLogger(ApplicationModule.class.getName());
+
     @Override
     protected void configure() {
         Properties defaults = new Properties();
@@ -27,69 +36,37 @@ public class ApplicationModule extends AbstractModule {
         defaults.setProperty("user.last.name", "ted");
         defaults.setProperty("user.nick.name", "teddy");
         defaults.setProperty("user.uuid", "123");
+        defaults.setProperty("log.file.name", "logFile.txt");
+        defaults.setProperty("filesystem.source.id", "source");
+        defaults.setProperty("filesystem.target.id", "target");
+        defaults.setProperty("filesystem.source.path", "ya/ya/yeah");
+        defaults.setProperty("filesystem.target.path", "koko/jumbo");
         Properties props = new Properties(defaults);
+
         try {
             String workingDir = System.getProperty("user.dir");
-        String userDetailsConfPath = System.getProperty("propertiesPath", Paths.get(workingDir).resolve("src/main/resources/application.properties").toString());
-        File userDetailsFile = Paths.get(workingDir).resolve(Paths.get(userDetailsConfPath)).toFile();
-            props.load(new FileInputStream("my.properties"));
+            String userDetailsConfPath = System.getProperty("propertiesPath", Paths.get(workingDir).resolve("src/main/resources/application.properties").toString());
+            File applicationPropertiesFile = Paths.get(workingDir).resolve(Paths.get(userDetailsConfPath)).toFile();
+            props.load(new FileInputStream(applicationPropertiesFile));
             Names.bindProperties(binder(), props);
         } catch (IOException e) {
-            logger.error("Could not load config: ", e);
+            logger.severe("Could not load config: " + e.getMessage());
             System.exit(1);
         }
     }
+
+    @Provides @Named("LogFileSearchDescriptor")
+    public SearchDescriptor<Path> getDefaultSearchDescriptor(){
+        return new SearchDescriptor<Path>() {
+            @Override
+            public boolean match(Path entry) {
+                return false;
+            }
+        };
     }
 
     @Provides
-    public IUser getUser(){
-        try {
-            List<String> lines = Files.readAllLines(configFile.toPath());
-            return new IUser() {
-                @Override
-                public String getFirstName() {
-                    return lines.get(0);
-                }
-
-                @Override
-                public String getLastName() {
-                    return lines.get(1);
-                }
-
-                @Override
-                public String getNickName() {
-                    return lines.get(2);
-                }
-
-                @Override
-                public long getUUID() {
-                    return Long.parseLong(lines.get(3));
-                }
-
-                @Override
-                public String toString() {
-                    return String.join(", ", getFirstName(), getLastName(), getNickName(), "" + getUUID());
-                }
-
-            };
-        } catch (IOException ex) {
-            // ignore
-        }
-        return null;
-    }
-
-    @Provides @Singleton
-    public ISecurityManager getSecurityManager(){
-        return new SecurityManagerImpl();
-    }
-
-    @Provides @Singleton
-    public IFileSystemProvider getFileSystemProvider(){
-        return new FileSystemProviderImpl();
-    }
-
-    @Provides
-    public ILoginDetails getLoginDetails(){
+    public ILoginDetails getLoginDetails() {
         return new ILoginDetails() {
             @Override
             public byte[] getPassword() {
@@ -98,17 +75,18 @@ public class ApplicationModule extends AbstractModule {
         };
     }
 
-    private class FileSystemProviderImpl implements IFileSystemProvider {
+    @Singleton
+    private static class FileSystemProviderImpl implements IFileSystemProvider {
 
         private FileSystem fileSystem = Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix());
 
-        public FileSystemProviderImpl() {
+        public FileSystemProviderImpl(@Named("filesystem.source.path") String source, @Named("filesystem.target.path") String target) {
             try {
-                Path targetPath = fileSystem.getPath("ya", "ya", "yeah");
-                Path homePath = fileSystem.getPath("koko", "jumbo");
+                Path targetPath = fileSystem.getPath(target);
+                Path homePath = fileSystem.getPath(source);
                 Files.createDirectories(homePath);
                 Files.createDirectories(targetPath);
-                PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Files.createFile(homePath.resolve("report.txt"))));
+                PrintWriter writer = new PrintWriter(Files.newBufferedWriter(Files.createFile(homePath.resolve("logFile.txt"))));
                 writer.println("test test 1 2 3");
                 writer.close();
             } catch (IOException ex) {
@@ -117,8 +95,8 @@ public class ApplicationModule extends AbstractModule {
         }
 
         @Override
-        public IFileSystem get(String identifier, ICredintials credintials) {
-            if (!isDemoParams(identifier, credintials)) {
+        public IFileSystem get(String identifier, ICredintials credentials) {
+            if (!isDemoParams(identifier, credentials)) {
                 return null;
             }
 
@@ -190,11 +168,11 @@ public class ApplicationModule extends AbstractModule {
             };
         }
 
-        private boolean isDemoParams(String identifier, ICredintials credintials) {
+        private boolean isDemoParams(String identifier, ICredintials credentials) {
             return ("source".equals(identifier) || "target".equals(identifier))
-                    && "teddy".equals(credintials.getUser().getNickName())
-                    && new String(credintials.getAuthenticationBean().getToken()).compareTo("123") == 0
-                    && 123L == credintials.getAuthorizationBean().getAuthorizationToken();
+                    && "teddy".equals(credentials.getUser().getNickName())
+                    && new String(credentials.getAuthenticationBean().getToken()).compareTo("123") == 0
+                    && 123L == credentials.getAuthorizationBean().getAuthorizationToken();
         }
 
         @Override
@@ -208,7 +186,7 @@ public class ApplicationModule extends AbstractModule {
     }
 
     @Singleton
-    private class SecurityManagerImpl implements ISecurityManager {
+    private static class SecurityManagerImpl implements ISecurityManager {
         @Override
         public ICredintials createCredintials(IUser user, ILoginDetails loginDetails) throws SecurityException {
             if ("teddy".equals(user.getNickName()) && new String(loginDetails.getPassword()).compareTo("teddyPassword") == 0) {
@@ -244,10 +222,52 @@ public class ApplicationModule extends AbstractModule {
         }
 
         @Override
-        public void validateCredintials(ICredintials credintials) throws SecurityException {
-            if(new Random().nextInt() % 2 == 0){
-                throw new SecurityException("Credintials not valid!");
+        public void validateCredintials(ICredintials credentials) throws SecurityException {
+            if (new Random().nextInt() % 2 == 0) {
+                throw new SecurityException("Credentials not valid!");
             }
         }
+    }
+
+    @Singleton
+    private static class UserImpl implements IUser {
+        private final String firstName;
+        private final String lastName;
+        private final String nickName;
+        private final String uuid;
+
+        @Inject
+        public UserImpl(@Named("user.first.name") String firstName, @Named("user.last.name") String lastName, @Named("user.nick.name") String nickName, @Named("user.uuid") String uuid) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.nickName = nickName;
+            this.uuid = uuid;
+        }
+
+        @Override
+        public String getFirstName() {
+            return firstName;
+        }
+
+        @Override
+        public String getLastName() {
+            return lastName;
+        }
+
+        @Override
+        public String getNickName() {
+            return nickName;
+        }
+
+        @Override
+        public long getUUID() {
+            return Long.parseLong(uuid);
+        }
+
+        @Override
+        public String toString() {
+            return String.join(", ", getFirstName(), getLastName(), getNickName(), "" + getUUID());
+        }
+
     }
 }
