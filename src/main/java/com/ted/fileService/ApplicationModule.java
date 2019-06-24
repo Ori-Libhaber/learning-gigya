@@ -10,7 +10,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.ted.fileService.logic.SearchAlgorithm;
 import com.ted.fileService.logic.SearchDescriptor;
+import com.ted.fileService.logic.SingleFileLinerSearchAlgorithm;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +22,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -31,6 +32,15 @@ public class ApplicationModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        // interface binding
+        bind(ISecurityManager.class).to(SecurityManagerImpl.class).asEagerSingleton();
+        bind(IUser.class).to(UserImpl.class);
+        bind(SearchAlgorithm.class).to(SingleFileLinerSearchAlgorithm.class);
+        bind(IFileSystemProvider.class).to(FileSystemProviderImpl.class);
+        bind(SearchDescriptor.class).to(SearchDescriptorImpl.class);
+
+        // configuration building
         Properties defaults = new Properties();
         defaults.setProperty("user.first.name", "ted");
         defaults.setProperty("user.last.name", "ted");
@@ -55,6 +65,23 @@ public class ApplicationModule extends AbstractModule {
         }
     }
 
+    @Provides @Inject
+    public SearchAlgorithm<IFileSystem, Path, SearchDescriptor<Path>> getSearchAlgorithm(SingleFileLinerSearchAlgorithm algorithm) {
+        return algorithm;
+    }
+
+    @Provides @Inject @Named("sourceFileSystem")
+    public IFileSystem getSourceFileSystem(IFileSystemProvider fileSystemProvider, @Named("filesystem.source.id") String id, IUser user, ILoginDetails loginDetails, ISecurityManager securityManager){
+        ICredintials credentials = securityManager.createCredintials(user, loginDetails);
+        return fileSystemProvider.get(id, credentials);
+    }
+
+    @Provides @Inject @Named("targetFileSystem")
+    public IFileSystem getTargetFileSystem(IFileSystemProvider fileSystemProvider, @Named("filesystem.target.id") String id, IUser user, ILoginDetails loginDetails, ISecurityManager securityManager){
+        ICredintials credentials = securityManager.createCredintials(user, loginDetails);
+        return fileSystemProvider.get(id, credentials);
+    }
+
     @Provides @Named("LogFileSearchDescriptor")
     public SearchDescriptor<Path> getDefaultSearchDescriptor(){
         return new SearchDescriptor<Path>() {
@@ -75,10 +102,25 @@ public class ApplicationModule extends AbstractModule {
         };
     }
 
+    private static class SearchDescriptorImpl implements SearchDescriptor<Path>{
+
+        private String sourceName;
+
+        @Inject
+        public SearchDescriptorImpl(@Named("log.file.name") String sourceName) {
+            this.sourceName = sourceName;
+        }
+
+        @Override
+        public boolean match(Path entry) {
+            return entry.getFileName().endsWith(sourceName);
+        }
+    }
+
     @Singleton
     private static class FileSystemProviderImpl implements IFileSystemProvider {
 
-        private FileSystem fileSystem = Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix());
+        private static FileSystem fileSystem = Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix());
 
         @Inject
         public FileSystemProviderImpl(@Named("filesystem.source.path") String source, @Named("filesystem.target.path") String target, @Named("log.file.name") String logfileName) {

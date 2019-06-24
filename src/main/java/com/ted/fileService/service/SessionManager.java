@@ -5,9 +5,11 @@ import com.evil.corp.security.ILoginDetails;
 import com.evil.corp.security.ISecurityManager;
 import com.evil.corp.security.IUser;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import java.util.logging.Logger;
 
+@Singleton
 public class SessionManager {
 
     private static Logger logger =  Logger.getLogger(SessionManager.class.getName());

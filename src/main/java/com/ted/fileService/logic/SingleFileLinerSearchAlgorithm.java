@@ -1,6 +1,8 @@
 package com.ted.fileService.logic;
 
 import com.evil.corp.filesystem.IFileSystem;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,7 +16,8 @@ public class SingleFileLinerSearchAlgorithm implements SearchAlgorithmSingleResu
 
     private String rootPath;
 
-    public SingleFileLinerSearchAlgorithm(String rootPath) {
+    @Inject
+    public SingleFileLinerSearchAlgorithm(@Named("filesystem.source.path") String rootPath) {
         this.rootPath = rootPath;
     }
 
