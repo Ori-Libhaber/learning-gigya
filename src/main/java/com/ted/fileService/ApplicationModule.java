@@ -120,7 +120,7 @@ public class ApplicationModule extends AbstractModule {
     @Singleton
     private static class FileSystemProviderImpl implements IFileSystemProvider {
 
-        private static FileSystem fileSystem = Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix());
+        private static FileSystem fileSystem = Jimfs.newFileSystem();
 
         @Inject
         public FileSystemProviderImpl(@Named("filesystem.source.path") String source, @Named("filesystem.target.path") String target, @Named("log.file.name") String logfileName) {
