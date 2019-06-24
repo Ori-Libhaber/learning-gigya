@@ -35,9 +35,9 @@ public class FileService {
     
     // <editor-fold desc="violations" defaultstate="collapsed">
     /**
-     * The majority of the instance members is only used for class instantiation,
+     * The majority of the instance members are only used for class instantiation,
      * the rest of the business logic depends solely on sourceFileSystem and targetFileSystem.
-     * This is a SRP violation.
+     * This is a SRP & LOD violation.
      * 
      * Furthermore, we are maintaining a static instance member which couples our
      * implementation to global state - unpredictable code
@@ -49,7 +49,7 @@ public class FileService {
     private IFileSystem sourceFileSystem;
     private IFileSystem targetFileSystem;
     private IFileSystemProvider fileSystemProvider;
-    private ICredintials credintials;
+    private ICredintials credentials;
 
     //<editor-fold desc="violations" defaultstate="collapsed">
     /**
@@ -59,7 +59,7 @@ public class FileService {
      */
     //</editor-fold>
     private FileService() {
-        initilize();
+        initialize();
     }
 
     //<editor-fold desc="violations" defaultstate="collapsed">
@@ -84,17 +84,17 @@ public class FileService {
      * service instantiation
      * @throws SecurityException 
      */
-    private void initilize() throws SecurityException {
+    private void initialize() throws SecurityException {
         String workingDir = System.getProperty("user.dir");
         String userDetailsConfPath = System.getProperty("userPath", Paths.get(workingDir).resolve("src/main/resources/userDetails.conf").toString());
         File userDetailsFile = Paths.get(workingDir).resolve(Paths.get(userDetailsConfPath)).toFile();
         IUser user = ConfigManager.getUser(userDetailsFile);
         ILoginDetails loginDetails = ConfigManager.getLoginDetails(user);
         this.securityManager = ConfigManager.getSecurityManager();
-        this.credintials = this.securityManager.createCredintials(user, loginDetails);
+        this.credentials = this.securityManager.createCredintials(user, loginDetails);
         this.fileSystemProvider = ConfigManager.getFileSystemProvider();
-        this.sourceFileSystem = fileSystemProvider.get(ConfigManager.getSourceFileSystemIdentifier(), credintials);
-        this.targetFileSystem = fileSystemProvider.get(ConfigManager.getTargetFileSystemIdentifier(), credintials);
+        this.sourceFileSystem = fileSystemProvider.get(ConfigManager.getSourceFileSystemIdentifier(), credentials);
+        this.targetFileSystem = fileSystemProvider.get(ConfigManager.getTargetFileSystemIdentifier(), credentials);
     }
 
     //<editor-fold desc="violations" defaultstate="collapsed">
@@ -159,7 +159,7 @@ public class FileService {
                     String source = ConfigManager.getSourceFileName();
                     logger.info("Attempting to find and copy: " + source + " to backup location");
                     String suffix = String.valueOf(new Date().getTime());
-                    securityManager.validateCredintials(credintials);
+                    securityManager.validateCredintials(credentials);
                     Files.list(sourceFileSystem.getPath(ConfigManager.getHomeFolderPath()))
                             .filter(path -> path.getFileName().endsWith(source))
                             .findFirst()
@@ -179,7 +179,7 @@ public class FileService {
             }
         }catch (SecurityException ex){
           logger.log(Level.SEVERE, null, ex);
-          initilize();
+          initialize();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
