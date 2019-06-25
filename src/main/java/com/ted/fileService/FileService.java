@@ -49,7 +49,8 @@ public class FileService {
     private IFileSystem sourceFileSystem;
     private IFileSystem targetFileSystem;
     private IFileSystemProvider fileSystemProvider;
-    private ICredintials credentials;
+    private ICredintials sourceCredentials;
+    private ICredintials targetCredentials;
 
     //<editor-fold desc="violations" defaultstate="collapsed">
     /**
@@ -91,10 +92,11 @@ public class FileService {
         IUser user = ConfigManager.getUser(userDetailsFile);
         ILoginDetails loginDetails = ConfigManager.getLoginDetails(user);
         this.securityManager = ConfigManager.getSecurityManager();
-        this.credentials = this.securityManager.createCredintials(user, loginDetails);
+        this.sourceCredentials = this.securityManager.createCredintials(user, loginDetails);
+        this.targetCredentials = this.securityManager.createCredintials(user, loginDetails);
         this.fileSystemProvider = ConfigManager.getFileSystemProvider();
-        this.sourceFileSystem = fileSystemProvider.get(ConfigManager.getSourceFileSystemIdentifier(), credentials);
-        this.targetFileSystem = fileSystemProvider.get(ConfigManager.getTargetFileSystemIdentifier(), credentials);
+        this.sourceFileSystem = fileSystemProvider.get(ConfigManager.getSourceFileSystemIdentifier(), sourceCredentials);
+        this.targetFileSystem = fileSystemProvider.get(ConfigManager.getTargetFileSystemIdentifier(), targetCredentials);
     }
 
     //<editor-fold desc="violations" defaultstate="collapsed">
@@ -159,7 +161,8 @@ public class FileService {
                     String source = ConfigManager.getSourceFileName();
                     logger.info("Attempting to find and copy: " + source + " to backup location");
                     String suffix = String.valueOf(new Date().getTime());
-                    securityManager.validateCredintials(credentials);
+                    securityManager.validateCredintials(sourceCredentials);
+                    securityManager.validateCredintials(targetCredentials);
                     Files.list(sourceFileSystem.getPath(ConfigManager.getHomeFolderPath()))
                             .filter(path -> path.getFileName().endsWith(source))
                             .findFirst()

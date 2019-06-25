@@ -42,7 +42,7 @@ public class FileServiceTest {
         // instantiate and setup the state of the SUT and its mocked dependencies
         
         // WHEN
-        // set mocked behaviour for collabrators
+        // set mocked behaviour for collaborators
         
         // INVOKE
         // execute the actual test method
@@ -59,7 +59,7 @@ public class FileServiceTest {
         // instantiate and setup the state of the SUT and its mocked dependencies
         
         // WHEN
-        // set mocked behaviour for collabrators
+        // set mocked behaviour for collaborators
         
         // INVOKE
         // execute the actual test method
@@ -76,7 +76,7 @@ public class FileServiceTest {
         // instantiate and setup the state of the SUT and its mocked dependencies
         
         // WHEN
-        // set mocked behaviour for collabrators
+        // set mocked behaviour for collaborators
         
         // INVOKE
         // execute the actual test method
