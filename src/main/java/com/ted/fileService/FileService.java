@@ -20,8 +20,10 @@ import java.util.logging.Logger;
 //<editor-fold desc="violations" defaultstate="collapsed">
 /**
  *
- * Class lies about its collaborates.
+ * Class lies about its collaborators.
  * Class violates SRP & LOD
+ * Class has low cohesion
+ * Class is strongly coupled to its collaborators.
  *
  */
 //</editor-fold>
@@ -142,7 +144,7 @@ public class FileService {
      * Method have a deceiving name, it actually does more then to find a file - violates SRP - has numerous reasons to change.
      * Method relays on global state (calling static methods, relaying on current time)
      * Method logic is non-deterministic, dependent of the time configuration of the hosting machine.
-     * Method is structure is confusing, abusing streaming API.
+     * Method structure is confusing, abusing streaming API.
      * Method has side-effects, it generates a random name for the target file, its hard to test the successful path when the resulting file name is unknown
      * and also changes global state of ConfigManager
      * Method lies about it's collaborators & dependencies - the only way to find out is to read the code!
